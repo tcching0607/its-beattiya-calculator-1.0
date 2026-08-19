@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>伊絲碧媞計算機</title>
+<style>
+:root{
+  --bg:#fbfaf7;
+  --card:#fff;
+  --gold:#c8a96b;
+  --gold-dark:#9b793f;
+  --gold-soft:#f5efe2;
+  --gold-line:#e8dcc0;
+  --text:#302b24;
+  --muted:#8f877c;
+  --line:#ece6da;
+  --shadow:0 12px 34px rgba(121,99,59,.10);
+  --radius:18px;
+  --bottom-safe:150px;
+  --col-name:36%;
+  --col-price:14%;
+  --col-pv:10%;
+  --col-qty:20%;
+  --col-subtotal:20%;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  padding-bottom:max(var(--bottom-safe),calc(var(--bottom-safe) + env(safe-area-inset-bottom)));
+  background:linear-gradient(180deg,#fff 0%,var(--bg) 100%);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",Arial,sans-serif;
+}
+button,input,select{font:inherit}
+button{-webkit-tap-highlight-color:transparent}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 20px 24px}
+h1{text-align:center;margin:5px 0 22px;font-size:32px;letter-spacing:.08em;font-weight:800}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px;font-weight:650;color:#5f584f}
+.meta .currency{font-size:14px;color:var(--muted);white-space:nowrap}
+.toolbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:14px 0 22px}
+.tabs{grid-column:2;display:flex;gap:4px;padding:5px;background:#f3efe6;border:1px solid var(--line);border-radius:999px}
+.tab{border:0;background:transparent;color:#7b7266;font-weight:750;padding:10px 22px;border-radius:999px;cursor:pointer}
+.tab.active{background:#fff;color:#6b5229;box-shadow:0 3px 10px rgba(108,84,37,.12)}
+.reset-btn{grid-column:3;justify-self:end;width:42px;height:42px;border:1px solid var(--gold-line);border-radius:50%;background:#fff;color:#85652f;font-size:22px;line-height:1;cursor:pointer;box-shadow:var(--shadow)}
+.panel{overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.customer-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;border-bottom:1px solid var(--line)}
+.field label{display:block;margin-bottom:7px;font-size:13px;color:var(--muted)}
+.field input,.field select{width:100%;height:44px;padding:0 13px;border:1px solid #ded6c8;border-radius:12px;background:#fff;color:var(--text);outline:none}
+.field input:focus,.field select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(200,169,107,.14)}
+.category{border-top:1px solid var(--line)}
+.category:first-child{border-top:0}
+.cat-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 20px;border:0;background:linear-gradient(90deg,#fff,#fbf8f1);color:#5b4b31;font-weight:800;text-align:left;cursor:pointer}
+.cat-title{flex:1;min-width:0}
+.chev{margin-left:auto;font-size:17px;transform:rotate(90deg);transition:transform .18s ease}
+.category.collapsed .chev{transform:rotate(0)}
+.category.collapsed .cat-body{display:none}
+.table-wrap{width:100%;overflow-x:hidden}
+.product-table{width:100%;table-layout:fixed;border-collapse:collapse}
+.product-table th,.product-table td{padding:12px 8px;border-bottom:1px solid var(--line);vertical-align:middle;box-sizing:border-box}
+.product-table th{background:#fcfbf8;color:#756c60;font-size:13px;font-weight:750}
+.product-table th:first-child,.product-table td:first-child{width:var(--col-name);text-align:left}
+.product-table th:nth-child(2),.product-table td:nth-child(2){width:var(--col-price);text-align:center}
+.product-table th:nth-child(3),.product-table td:nth-child(3){width:var(--col-pv);text-align:center}
+.product-table th:nth-child(4),.product-table td:nth-child(4){width:var(--col-qty);text-align:center}
+.product-table th:nth-child(5),.product-table td:nth-child(5){width:var(--col-subtotal);text-align:center}
+.product-table td:first-child{overflow-wrap:anywhere}
+.money,.pv{white-space:nowrap}
+.qty{display:inline-flex;align-items:center;justify-content:center;max-width:100%;overflow:hidden;border:1px solid #ddd3c2;border-radius:999px;background:#fff}
+.qty button{flex:0 0 32px;width:32px;height:34px;padding:0;border:0;background:#f7f3ea;color:#7b6137;font-size:18px;cursor:pointer}
+.qty input{width:46px;height:34px;padding:0 2px;border:0;outline:none;text-align:center;color:var(--text);background:#fff;-moz-appearance:textfield}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.subtotal{font-weight:800;color:#5f4a26;line-height:1.4}
+.subtotal small{display:block;margin-top:2px;color:#958776;font-weight:650}
+.fee-head{display:grid;grid-template-columns:1fr 180px 80px;gap:12px;padding:10px 20px;background:#fcfbf8;color:#756c60;font-size:13px;font-weight:750}
+.fee-head div:nth-child(2),.fee-head div:nth-child(3){text-align:center}
+.fee-grid{padding:0 20px 12px}
+.fee-row{display:grid;grid-template-columns:1fr 180px 80px;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.fee-row:last-child{border-bottom:0}
+.fee-row .fee-price,.fee-check{text-align:center}
+.fee-check input{width:19px;height:19px;accent-color:#b99655;cursor:pointer}
+.bottom-bar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-top:1px solid var(--line);box-shadow:0 -8px 26px rgba(90,74,46,.08);padding-bottom:env(safe-area-inset-bottom)}
+.bottom-inner{max-width:1180px;margin:0 auto;padding:13px 20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:14px;align-items:center}
+.metric{min-width:0}
+.metric span{display:block;margin-bottom:4px;font-size:12px;color:#8d8579}
+.metric strong{display:block;font-size:21px;color:#4b4031;white-space:nowrap}
+.metric small{display:block;margin-top:2px;color:#9a8b72;font-size:11px;line-height:1.3}
+.detail-btn{border:0;border-radius:14px;padding:13px 20px;background:linear-gradient(135deg,#c9aa6b,#a8874b);color:#fff;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(165,132,72,.22)}
+.modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(30,26,20,.35)}
+.modal.open{display:flex}
+.modal-card{width:min(860px,96vw);max-height:86vh;overflow:auto;background:#fff;border:1px solid #eee5d7;border-radius:22px;box-shadow:0 24px 70px rgba(36,29,19,.24)}
+.modal-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:#fff;border-bottom:1px solid var(--line)}
+.modal-head h2{margin:0;font-size:22px}
+.close{width:36px;height:36px;padding:0;border:0;border-radius:50%;background:#f4efe5;color:#6f5c3e;font-size:20px;cursor:pointer}
+.modal-body{padding:20px 22px 26px}
+.detail-customer{margin-bottom:12px;color:var(--muted)}
+.detail-table{width:100%;border-collapse:collapse;table-layout:fixed}
+.detail-table th,.detail-table td{padding:11px 8px;border-bottom:1px solid var(--line);font-size:13px;text-align:center;overflow-wrap:anywhere}
+.detail-table th:first-child,.detail-table td:first-child{width:46%;text-align:left}
+.summary-box{display:grid;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.summary-line{display:flex;justify-content:space-between;gap:16px;font-weight:750}
+.summary-line strong{color:#6b5126}
+.formula{text-align:right;color:var(--muted);font-size:12px}
+.empty{padding:15px 10px;color:var(--muted);text-align:center}
+@media(max-width:760px){
+  :root{--bottom-safe:188px}
+  .wrap{padding:22px 10px 20px}
+  h1{font-size:27px;margin-bottom:18px}
+  .meta{align-items:flex-start;font-size:14px}
+  .toolbar{grid-template-columns:1fr auto}
+  .tabs{grid-column:1;justify-self:start;width:100%;overflow:auto}
+  .tab{flex:1;padding:9px 14px;white-space:nowrap}
+  .reset-btn{grid-column:2}
+  .customer-row{grid-template-columns:1fr;padding:16px}
+  .cat-head{padding:14px 12px}
+  .bottom-inner{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:9px 8px 10px}
+  .metric span{font-size:11px}
+  .metric strong{font-size:15px}
+  .metric small{font-size:9px}
+  .detail-btn{grid-column:1/-1;width:100%;padding:10px}
+  .fee-head,.fee-row{grid-template-columns:1fr 100px 55px;padding-left:12px;padding-right:12px}
+  .fee-grid{padding:0}
+}
+@media(max-width:640px){
+  :root{--col-name:36%;--col-price:14%;--col-pv:10%;--col-qty:20%;--col-subtotal:20%}
+  .product-table th,.product-table td{padding:8px 2px;font-size:11px;line-height:1.35}
+  .qty{width:100%;max-width:78px}
+  .qty button{flex:0 0 22px;width:22px;height:27px;font-size:14px}
+  .qty input{width:30px;min-width:0;height:27px;font-size:11px}
+  .subtotal{font-size:10px;word-break:break-word}
+  .subtotal small{font-size:9px}
+  .money,.pv{font-size:10px}
+  .modal{padding:10px}
+  .modal-body{padding:14px 12px 20px}
+  .modal-head{padding:14px 16px}
+  .detail-table th,.detail-table td{padding:9px 4px;font-size:11px}
+}
+</style>
+
+<style id="version-b-subtotal-smaller-qty">
+/* 版本 B：保留單品總金額 / 單品總PV，小幅縮小數量 +/- 控制 */
+.qty button,
+.qty-btn,
+.quantity-control button,
+.qty-control button,
+.qty-stepper button {
+  width: 25px !important;
+  min-width: 25px !important;
+  height: 27px !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  line-height: 1 !important;
+}
+
+@media (max-width: 640px) {
+  .qty button,
+  .qty-btn,
+  .quantity-control button,
+  .qty-control button,
+  .qty-stepper button {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 24px !important;
+    font-size: 12px !important;
+  }
+
+  .qty input,
+  .quantity-control input,
+  .qty-control input,
+  .qty-stepper input {
+    width: 27px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+  }
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <h1>伊絲碧媞計算機</h1>
+  <div class="meta">
+    <div>季凌｜雅晴團隊－冠懿顧問</div>
+    <div class="currency">TW臺幣計價</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs"></div>
+    <button class="reset-btn" id="resetBtn" type="button" title="重整本方案" aria-label="重整本方案">↻</button>
+  </div>
+
+  <div class="panel">
+    <div class="customer-row">
+      <div class="field">
+        <label for="customerName">訂購人</label>
+        <input id="customerName" type="text" placeholder="姓名" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="rankSelect">位階</label>
+        <select id="rankSelect"></select>
+      </div>
+    </div>
+    <div id="productArea"></div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="bottom-inner">
+    <div class="metric"><span>總金額</span><strong id="grandAmount">NT$0</strong></div>
+    <div class="metric"><span>總PV值</span><strong id="grandPV">0 PV</strong></div>
+    <div class="metric"><span>業績獎金</span><strong id="bonusAmount">NT$0</strong><small id="bonusRank">會員（0%）｜總PV × 位階%</small></div>
+    <button class="detail-btn" id="detailBtn" type="button">訂單明細</button>
+  </div>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="detailTitle">訂單明細</h2>
+      <button class="close" id="closeModal" type="button" aria-label="關閉">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="detailCustomer" class="detail-customer"></div>
+      <div class="table-wrap">
+        <table class="detail-table">
+          <thead><tr><th>商品名稱</th><th>數量</th><th>金額</th><th>PV</th></tr></thead>
+          <tbody id="detailBody"></tbody>
+        </table>
+      </div>
+      <div class="summary-box">
+        <div class="summary-line"><span>訂單總金額</span><strong id="detailAmount">NT$0</strong></div>
+        <div class="summary-line"><span>訂單總PV值</span><strong id="detailPV">0 PV</strong></div>
+        <div class="summary-line"><span>預估業績獎金</span><strong id="detailBonus">NT$0</strong></div>
+        <div class="formula" id="detailFormula">計算方式：訂單總PV值 × 位階對應%</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const rankOptions = [
+  {name:'會員', pct:0},
+  {name:'專員', pct:25},
+  {name:'主任', pct:30},
+  {name:'經理', pct:35},
+  {name:'寶石', pct:37},
+  {name:'鑽石', pct:39},
+  {name:'顧問', pct:40}
+];
+
+const categories = [
+  {name:'賦活美肌保養系列', items:[
+    {id:'SK01', name:'淨柔雙效潔顏露｜1', price:1995, pv:1700},
+    {id:'SK02', name:'清透均衡柔膚露｜2', price:1995, pv:1700},
+    {id:'SK03', name:'多效熠采眼霜｜3', price:3990, pv:3500},
+    {id:'SK04', name:'臻白亮顏精華霜｜4', price:4200, pv:3600},
+    {id:'SK05', name:'淨顏晶透調理霜｜5', price:4200, pv:3600},
+    {id:'SK06A', name:'多效亮采防護霜｜6A', price:3990, pv:3500},
+    {id:'SK06B', name:'煥白修顏防曬霜｜6B', price:3990, pv:3500},
+    {id:'SK07', name:'菁萃緊緻煥膚霜｜7', price:2100, pv:1800},
+    {id:'SK08', name:'煥能賦活精華霜｜8', price:3990, pv:3500},
+    {id:'SK09', name:'凝水修護保濕霜｜9', price:2415, pv:2000},
+    {id:'SK09A', name:'凝水盈潤保濕霜｜9A', price:2415, pv:2000},
+    {id:'SK10', name:'舒緩修護精萃原液｜10', price:2415, pv:1600},
+    {id:'SKOIL', name:'煥采舒緩修護極萃油', price:4500, pv:3800},
+    {id:'MASK01', name:'菁萃緊緻生物纖維面膜', price:2940, pv:2400},
+    {id:'MASK02', name:'臻白亮顏生物纖維面膜', price:2940, pv:2400},
+    {id:'MASK03', name:'凝水修護生物纖維面膜', price:2415, pv:2000},
+    {id:'CPOWDER', name:'時光煥采亮顏C粉', price:3250, pv:2600},
+    {id:'CGIFT', name:'時光煥采亮顏C粉 禮盒', price:30500, pv:25000},
+    {id:'AMPOULE', name:'禮盒淨亮C泌安瓶', price:4500, pv:3600},
+    {id:'TRAVEL19', name:'賦活美肌保養系列1-9號<br>旅行組', price:10500, pv:8000}
+  ]},
+  {name:'賦采活沛系列', items:[
+    {id:'HEALTH01', name:'舒適亮眼葉黃素', price:2800, pv:1400}
+  ]},
+  {name:'纖盈輕窈系列', items:[
+    {id:'SLIM01', name:'舒暢酵素益生菌(60包/盒)', price:2880, pv:1800},
+    {id:'SLIM02', name:'舒暢酵素益生菌(20包/盒)', price:980, pv:550},
+    {id:'SLIM03', name:'SUSU纖燃膠囊', price:5940, pv:3900}
+  ]},
+  {name:'強韌洗護系列', items:[
+    {id:'HAIR01', name:'強韌養護洗髮露', price:2280, pv:1800},
+    {id:'HAIR02', name:'強韌養護洗髮乳', price:2880, pv:2300},
+    {id:'HAIR03', name:'絲柔強韌滋養乳', price:1080, pv:800}
+  ]},
+  {name:'淨柔洗護系列', items:[
+    {id:'BALANCE01', name:'淨柔平衡洗髮露', price:2280, pv:1800},
+    {id:'BALANCE02', name:'淨柔平衡洗髮乳', price:2680, pv:2100}
+  ]}
+];
+
+const fees = [
+  {id:'F_JOIN', name:'入會費', amount:1200, pv:0},
+  {id:'F_RENEW', name:'續會費', amount:500, pv:0}
+];
+
+const plans = ['方案一','方案二','方案三'].map(name => ({
+  name,
+  customer:'',
+  rank:0,
+  quantities:{},
+  feeId:'',
+  collapsed:{}
+}));
+
+let activePlan = 0;
+const $ = selector => document.querySelector(selector);
+const fmt = value => 'NT$' + Math.round(value).toLocaleString('zh-TW');
+const current = () => plans[activePlan];
+
+function buildStatic(){
+  $('#tabs').innerHTML = plans.map((plan,index) =>
+    `<button class="tab ${index===0?'active':''}" type="button" data-plan="${index}">${plan.name}</button>`
+  ).join('');
+
+  $('#rankSelect').innerHTML = rankOptions.map((rank,index) =>
+    `<option value="${index}">${rank.name}${rank.pct ? `(${rank.pct}%)` : ''}</option>`
+  ).join('');
+}
+
+function render(){
+  document.querySelectorAll('.tab').forEach((tab,index) => {
+    tab.classList.toggle('active', index === activePlan);
+  });
+
+  $('#customerName').value = current().customer;
+  $('#rankSelect').value = String(current().rank);
+
+  let html = '';
+
+  categories.forEach((category,categoryIndex) => {
+    const key = 'c' + categoryIndex;
+    const collapsed = !!current().collapsed[key];
+
+    html += `
+      <section class="category ${collapsed ? 'collapsed' : ''}">
+        <button class="cat-head" type="button" data-toggle="${key}" aria-expanded="${!collapsed}">
+          <span class="cat-title">${category.name}</span>
+          <span class="chev">›</span>
+        </button>
+        <div class="cat-body">
+          <div class="table-wrap">
+            <table class="product-table">
+              <thead>
+                <tr><th>商品名稱</th><th>售價</th><th>PV</th><th>數量</th><th>小計</th></tr>
+              </thead>
+              <tbody>`;
+
+    category.items.forEach(item => {
+      const quantity = Number(current().quantities[item.id] || 0);
+      html += `
+        <tr>
+          <td>${item.name}</td>
+          <td class="money">${fmt(item.price)}</td>
+          <td class="pv">${item.pv.toLocaleString('zh-TW')} PV</td>
+          <td>
+            <div class="qty">
+              <button type="button" data-minus="${item.id}" aria-label="減少 ${item.name} 數量">−</button>
+              <input type="number" min="0" step="1" inputmode="numeric" data-qty="${item.id}" value="${quantity}" aria-label="${item.name} 數量">
+              <button type="button" data-plus="${item.id}" aria-label="增加 ${item.name} 數量">＋</button>
+            </div>
+          </td>
+          <td class="subtotal">${fmt(item.price * quantity)}<small>${(item.pv * quantity).toLocaleString('zh-TW')} PV</small></td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div></div></section>`;
+  });
+
+  const feeCollapsed = !!current().collapsed.fee;
+  html += `
+    <section class="category ${feeCollapsed ? 'collapsed' : ''}">
+      <button class="cat-head" type="button" data-toggle="fee" aria-expanded="${!feeCollapsed}">
+        <span class="cat-title">會費</span>
+        <span class="chev">›</span>
+      </button>
+      <div class="cat-body">
+        <div class="fee-head"><div>商品名稱</div><div>金額</div><div>勾選</div></div>
+        <div class="fee-grid">`;
+
+  fees.forEach(fee => {
+    const checked = current().feeId === fee.id;
+    html += `
+      <label class="fee-row">
+        <div><strong>${fee.name}</strong></div>
+        <div class="fee-price">${fmt(fee.amount)}</div>
+        <div class="fee-check">
+          <input type="checkbox" data-fee="${fee.id}" ${checked ? 'checked' : ''} aria-label="${fee.name}">
+        </div>
+      </label>`;
+  });
+
+  html += `</div></div></section>`;
+  $('#productArea').innerHTML = html;
+  updateTotals();
+}
+
+function calculate(){
+  let amount = 0;
+  let pv = 0;
+  const lines = [];
+
+  categories.forEach(category => {
+    category.items.forEach(item => {
+      const quantity = Math.max(0, Number(current().quantities[item.id] || 0));
+      if(quantity > 0){
+        const itemAmount = item.price * quantity;
+        const itemPv = item.pv * quantity;
+        amount += itemAmount;
+        pv += itemPv;
+        lines.push({name:item.name, quantity, amount:itemAmount, pv:itemPv});
+      }
+    });
+  });
+
+  if(current().feeId){
+    const fee = fees.find(item => item.id === current().feeId);
+    if(fee){
+      amount += fee.amount;
+      pv += fee.pv;
+      lines.push({name:fee.name, quantity:1, amount:fee.amount, pv:fee.pv});
+    }
+  }
+
+  const rank = rankOptions[current().rank];
+  const bonus = pv * rank.pct / 100;
+
+  return {amount, pv, bonus, rank, lines};
+}
+
+function updateTotals(){
+  const result = calculate();
+  $('#grandAmount').textContent = fmt(result.amount);
+  $('#grandPV').textContent = result.pv.toLocaleString('zh-TW') + ' PV';
+  $('#bonusAmount').textContent = fmt(result.bonus);
+  $('#bonusRank').textContent = `${result.rank.name}（${result.rank.pct}%）｜總PV × ${result.rank.pct}%`;
+}
+
+function resetCurrentPlan(){
+  const name = current().name;
+  plans[activePlan] = {name, customer:'', rank:0, quantities:{}, feeId:'', collapsed:{}};
+  render();
+}
+
+function openDetail(){
+  const result = calculate();
+  $('#detailCustomer').textContent = `訂購人：${current().customer || '未填寫'}｜位階：${result.rank.name}（${result.rank.pct}%）`;
+
+  $('#detailBody').innerHTML = result.lines.length
+    ? result.lines.map(line => `
+        <tr>
+          <td>${line.name}</td>
+          <td>${line.quantity}</td>
+          <td>${fmt(line.amount)}</td>
+          <td>${line.pv.toLocaleString('zh-TW')} PV</td>
+        </tr>`).join('')
+    : `<tr><td colspan="4" class="empty">目前尚未輸入商品數量</td></tr>`;
+
+  $('#detailAmount').textContent = fmt(result.amount);
+  $('#detailPV').textContent = result.pv.toLocaleString('zh-TW') + ' PV';
+  $('#detailBonus').textContent = fmt(result.bonus);
+  $('#detailFormula').textContent = `計算方式：${result.pv.toLocaleString('zh-TW')} PV × ${result.rank.pct}%`;
+  $('#modal').classList.add('open');
+}
+
+buildStatic();
+render();
+
+document.addEventListener('click', event => {
+  const planButton = event.target.closest('[data-plan]');
+  if(planButton){
+    activePlan = Number(planButton.dataset.plan);
+    render();
+    return;
+  }
+
+  const toggleButton = event.target.closest('[data-toggle]');
+  if(toggleButton){
+    const key = toggleButton.dataset.toggle;
+    current().collapsed[key] = !current().collapsed[key];
+    render();
+    return;
+  }
+
+  const plusButton = event.target.closest('[data-plus]');
+  if(plusButton){
+    const id = plusButton.dataset.plus;
+    current().quantities[id] = Number(current().quantities[id] || 0) + 1;
+    render();
+    return;
+  }
+
+  const minusButton = event.target.closest('[data-minus]');
+  if(minusButton){
+    const id = minusButton.dataset.minus;
+    current().quantities[id] = Math.max(0, Number(current().quantities[id] || 0) - 1);
+    render();
+  }
+});
+
+$('#customerName').addEventListener('input', event => {
+  current().customer = event.target.value;
+});
+
+$('#rankSelect').addEventListener('change', event => {
+  current().rank = Number(event.target.value);
+  updateTotals();
+});
+
+$('#productArea').addEventListener('change', event => {
+  if(event.target.matches('[data-qty]')){
+    const value = Math.max(0, parseInt(event.target.value || '0', 10) || 0);
+    current().quantities[event.target.dataset.qty] = value;
+    render();
+    return;
+  }
+
+  if(event.target.matches('[data-fee]')){
+    const feeId = event.target.dataset.fee;
+    current().feeId = current().feeId === feeId ? '' : feeId;
+    render();
+  }
+});
+
+$('#productArea').addEventListener('input', event => {
+  if(event.target.matches('[data-qty]')){
+    const value = Math.max(0, parseInt(event.target.value || '0', 10) || 0);
+    current().quantities[event.target.dataset.qty] = value;
+    updateTotals();
+  }
+});
+
+$('#resetBtn').addEventListener('click', resetCurrentPlan);
+$('#detailBtn').addEventListener('click', openDetail);
+$('#closeModal').addEventListener('click', () => $('#modal').classList.remove('open'));
+$('#modal').addEventListener('click', event => {
+  if(event.target === $('#modal')) $('#modal').classList.remove('open');
+});
+document.addEventListener('keydown', event => {
+  if(event.key === 'Escape') $('#modal').classList.remove('open');
+});
+</script>
+</body>
+</html>
